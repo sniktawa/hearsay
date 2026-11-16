@@ -1,0 +1,78 @@
+// Draft data model. Every store-owned table is scoped by shopId.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Shop {
+  id             String          @id @default(cuid())
+  domain         String          @unique // mystore.myshopify.com
+  accessToken    String
+  installedAt    DateTime        @default(now())
+  uninstalledAt  DateTime?
+  settings       ShopSettings?
+  reviews        Review[]
+  reviewRequests ReviewRequest[]
+}
+
+model ShopSettings {
+  shopId             String  @id
+  shop               Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  requestDelayDays   Int     @default(14)
+  autoPublishMinStar Int     @default(4) // reviews at or above this publish automatically
+  senderName         String?
+  brandColor         String?
+}
+
+model Review {
+  id           String        @id @default(cuid())
+  shopId       String
+  shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  productId    String        // Shopify product GID
+  orderId      String?       // set when it's a verified purchase
+  rating       Int
+  title        String?
+  body         String?
+  authorName   String
+  authorEmail  String?       // encrypted at rest
+  status       ReviewStatus  @default(PENDING)
+  source       ReviewSource  @default(NATIVE)
+  media        ReviewMedia[]
+  reply        String?
+  createdAt    DateTime      @default(now())
+
+  @@index([shopId, productId, status])
+}
+
+model ReviewMedia {
+  id        String    @id @default(cuid())
+  reviewId  String
+  review    Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  kind      MediaKind
+  url       String
+  width     Int?
+  height    Int?
+}
+
+model ReviewRequest {
+  id          String        @id @default(cuid())
+  shopId      String
+  shop        Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  orderId     String
+  email       String        // encrypted at rest
+  sendAt      DateTime
+  sentAt      DateTime?
+  status      RequestStatus @default(SCHEDULED)
+
+  @@unique([shopId, orderId])
+  @@index([status, sendAt])
+}
+
+enum ReviewStatus  { PENDING PUBLISHED HIDDEN }
+enum ReviewSource  { NATIVE IMPORT_CSV IMPORT_LOOX IMPORT_JUDGEME IMPORT_YOTPO IMPORT_OKENDO }
+enum MediaKind     { IMAGE VIDEO }
+enum RequestStatus { SCHEDULED SENT CANCELLED BOUNCED }
