@@ -29,7 +29,7 @@ One multi-tenant server runs every brand. Each brand connects its store through 
 
 ## Getting started
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). The roadmap and open work live in [docs/roadmap.md](docs/roadmap.md) and the Issues tab.
+See [CONTRIBUTING.md](CONTRIBUTING.md). The review collection spec is in [docs/collection-flow.md](docs/collection-flow.md). The roadmap and open work live in [docs/roadmap.md](docs/roadmap.md) and the Issues tab.
 
 ## License
 
